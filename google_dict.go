@@ -90,12 +90,18 @@ func appendWord(word string) {
 	}
 }
 
-var jFlag bool
+var jsonFlag bool
+var langFlag string
 
 func init() {
 	log.SetFlags(0)
 
-	flag.BoolVar(&jFlag, "json", false, "Read json from stdin")
+	const (
+		usageJson = "Read json from stdin"
+		usageLang = "Choose language {en_US, fr}."
+	)
+	flag.BoolVar(&jsonFlag, "json", false, usageJson)
+	flag.StringVar(&langFlag, "lang", "en_US", usageLang)
 	flag.Parse()
 }
 
@@ -108,7 +114,7 @@ func main() {
 	wrapper := wordwrap.Wrapper(ncols, false)
 
 	// If "-json" is given, it will parse json from `sdcv`
-	if jFlag {
+	if jsonFlag {
 		reader := bufio.NewReader(os.Stdin)
 		stdin, _ := reader.ReadBytes('\n')
 		// fmt.Println(text)
@@ -120,7 +126,8 @@ func main() {
 			printStyle(vWord, sB, fg15, bg8)
 
 			for _, s := range strings.Split(vDef, "\n") {
-				fmt.Printf("  %v\n", wrapper(s))
+				// fmt.Printf("  %v\n", wrapper(s))
+				fmt.Println(wordwrap.Indent(wrapper(s), "  ", false))
 			}
 		})
 		fmt.Println()
@@ -129,22 +136,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	lang := "en_US"
-	args := os.Args
-	var word string
+	args := flag.Args()
 	if l := len(os.Args); l == 1 {
-		log.SetFlags(0)
 		log.Fatal("No word given")
-	} else if l == 3 {
-		if strings.ToUpper(args[1]) == "FR" {
-			lang = "fr"
-		}
-		word = args[2]
-	} else if l == 2 {
-		word = args[1]
 	}
+	word := args[0]
 
-	url := fmt.Sprintf("https://api.dictionaryapi.dev/api/v2/entries/%s/%s", lang, word)
+	url := fmt.Sprintf("https://api.dictionaryapi.dev/api/v2/entries/%s/%s", langFlag, word)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -178,13 +176,14 @@ func main() {
 				ind += 1
 				vDef, _ := jsonparser.GetString(va, "definition")
 				vEx, _ := jsonparser.GetString(va, "example")
-				// fmt.Println("\t", vDef)
-				// fmt.Printf("\t%v. %v\n", ind, vDef)
-				vDef = fmt.Sprintf("  %v. %v", ind, vDef)
-				// fmt.Println(wordwrap.WrapString(vDef, ncols))
-				fmt.Println(wrapper(vDef))
+				vDef = fmt.Sprintf("%v. %v", ind, vDef)
+				fmt.Println(wordwrap.Indent(vDef, "  ", false))
+				// fmt.Printf("  %v. %v\n", ind, wrapper(vDef))
 				if len(vEx) > 0 {
-					fmt.Println("   ⤷", "\""+vEx+"\"")
+					// fmt.Println("   ⤷", "\""+vEx+"\"")
+					// fmt.Printf("   ⤷ %v\n", wrapper("\""+vEx+"\""))
+					vEx = fmt.Sprintf("⤷ \"%v\"", vEx)
+					fmt.Println(wordwrap.Indent(vEx, "   ", false))
 				}
 				// syn, _ := jsonparser.GetString(va, "synonyms")
 				// fmt.Println("\t", syn)
