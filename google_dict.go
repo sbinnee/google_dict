@@ -1,19 +1,20 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"fmt"
 	"github.com/buger/jsonparser"
-	// "io/ioutil"
+	"github.com/eidolon/wordwrap"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	// "path/filepath"
+	"path"
 	"strings"
-	// "unicode/utf16"
-	"github.com/mitchellh/go-wordwrap"
-	"strconv"
 )
+
+const ncols int = 80
 
 const (
 	// Foreground Color
@@ -71,10 +72,63 @@ func printlnStyle(txt string, st ...string) {
 	fmt.Print(strings.Join(st, ""), " ", txt, " ", dd, "\n")
 }
 
+func appendWord(word string) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal("Can get $HOME")
+	}
+	plog := path.Join(home, "Notes", "dict")
+
+	f, err := os.OpenFile(plog, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	_, err = f.WriteString(word + "\n")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+var jFlag bool
+
+func init() {
+	log.SetFlags(0)
+
+	flag.BoolVar(&jFlag, "json", false, "Read json from stdin")
+	flag.Parse()
+}
+
 func main() {
-	columns, _ := strconv.Atoi(os.Getenv("COLUMNS"))
-	ncols := uint(columns)
-	// f := filepath.Join(os.Getenv("HOME"), "hello_indent.json")
+	var vWord string
+
+	// Doesn't work... COLUMNS is set by shell
+	// ncols, _ = strconv.Atoi(os.Getenv("COLUMNS"))
+	// fmt.Printf("%v %T", envCOLUMNS, envCOLUMNS)
+	wrapper := wordwrap.Wrapper(ncols, false)
+
+	// If "-json" is given, it will parse json from `sdcv`
+	if jFlag {
+		reader := bufio.NewReader(os.Stdin)
+		stdin, _ := reader.ReadBytes('\n')
+		// fmt.Println(text)
+		jsonparser.ArrayEach(stdin, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			vDict, _ := jsonparser.GetString(value, "dict")
+			vWord, _ = jsonparser.GetString(value, "word")
+			vDef, _ := jsonparser.GetString(value, "definition")
+			fmt.Println("sdcv: " + vDict)
+			printStyle(vWord, sB, fg15, bg8)
+
+			for _, s := range strings.Split(vDef, "\n") {
+				fmt.Printf("  %v\n", wrapper(s))
+			}
+		})
+		fmt.Println()
+
+		appendWord(vWord)
+		os.Exit(0)
+	}
+
 	lang := "en_US"
 	args := os.Args
 	var word string
@@ -97,39 +151,40 @@ func main() {
 	}
 	content, _ := io.ReadAll(resp.Body)
 
-	fmt.Println(string(content))
+	// fmt.Println(string(content))
 
 	// jsonparser.ObjectEach(content, func(value []byte, dataType jsonparser.ValueType, offset int))
 	jsonparser.ArrayEach(content, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		txt, _ := jsonparser.GetString(value, "word")
-		// fmt.Println(txt)
-		printStyle(txt, sB, fg15, bg8)
+		vWord, _ = jsonparser.GetString(value, "word")
+		// fmt.Println(vWord)
+		printStyle(vWord, sB, fg15, bg8)
 		// "word", "phonetics", ["text", "audio"]
 		jsonparser.ArrayEach(value, func(val []byte, dataType jsonparser.ValueType, offset int, err error) {
-			txt, _ := jsonparser.GetString(val, "text")
+			vText, _ := jsonparser.GetString(val, "text")
 			// audio, _ := jsonparser.GetString(val, "audio")
-			printStyle("  "+txt, fg2)
+			printStyle("  "+vText, fg2)
 			// fmt.Println(audio)
 		}, "phonetics")
 		fmt.Println() // Add a new line
 		// "meanings"
 		jsonparser.ArrayEach(value, func(val []byte, dataType jsonparser.ValueType, offset int, err error) {
 			// "partOfSpeech"
-			txt, _ := jsonparser.GetString(val, "partOfSpeech")
-			// fmt.Println(txt)
-			printlnStyle(txt, sI)
+			vPOS, _ := jsonparser.GetString(val, "partOfSpeech")
+			// fmt.Println(vPOS)
+			printlnStyle(vPOS, sI)
 			// "definitions"
 			ind := 0
 			jsonparser.ArrayEach(val, func(va []byte, dataType jsonparser.ValueType, offset int, err error) {
 				ind += 1
-				def, _ := jsonparser.GetString(va, "definition")
-				eg, _ := jsonparser.GetString(va, "example")
-				// fmt.Println("\t", def)
-				// fmt.Printf("\t%v. %v\n", ind, def)
-				def = fmt.Sprintf("  %v. %v", ind, def)
-				fmt.Println(wordwrap.WrapString(def, ncols))
-				if len(eg) > 0 {
-					fmt.Println("   ⤷", "\""+eg+"\"")
+				vDef, _ := jsonparser.GetString(va, "definition")
+				vEx, _ := jsonparser.GetString(va, "example")
+				// fmt.Println("\t", vDef)
+				// fmt.Printf("\t%v. %v\n", ind, vDef)
+				vDef = fmt.Sprintf("  %v. %v", ind, vDef)
+				// fmt.Println(wordwrap.WrapString(vDef, ncols))
+				fmt.Println(wrapper(vDef))
+				if len(vEx) > 0 {
+					fmt.Println("   ⤷", "\""+vEx+"\"")
 				}
 				// syn, _ := jsonparser.GetString(va, "synonyms")
 				// fmt.Println("\t", syn)
@@ -155,11 +210,8 @@ func main() {
 				fmt.Println()
 			}, "definitions")
 		}, "meanings")
-
 	})
 
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	appendWord(vWord)
 
 }
