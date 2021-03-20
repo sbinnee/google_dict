@@ -12,18 +12,16 @@ I use a bash script to wrap `sdcv` and `google_dict` and save the word I
 searched in a file so that I can memorize more words. 
 
 ## Program structure
+1. Parse json from `sdcv`, if *-json* flag given
+
+Otherwise, 
 1. Use Google dicdtionary 3rd party API
 	- https://dictionaryapi.dev/
 2. Get request
 3. Parse json response
 	- https://github.com/buger/jsonparser
-4. Display pretty
+4. Display it pretty
 	- https://github.com/liamg/tml
 	- https://github.com/gookit/color
 	- https://github.com/1dot75cm/gocolor
 
-
-## TODO
-1. Help page
-2. Parse json from `sdcv` to make uniform printing format
-3. Separate ANSI codes
