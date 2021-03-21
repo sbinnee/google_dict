@@ -1,4 +1,4 @@
-module google_dict
+module parse_dict
 
 go 1.16
 

@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/buger/jsonparser"
 	"github.com/eidolon/wordwrap"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -90,23 +88,28 @@ func appendWord(word string) {
 	}
 }
 
-var jsonFlag bool
-var langFlag string
+var googleFlag bool
+
+// var langFlag string
 
 func init() {
 	log.SetFlags(0)
 
 	const (
-		usageJson = "Read json from stdin"
-		usageLang = "Choose language {en_US, fr}."
+		usageGoogle = "Read json from `sdcv`"
+		usageLang   = "Choose language {en_US, fr}."
 	)
-	flag.BoolVar(&jsonFlag, "json", false, usageJson)
-	flag.StringVar(&langFlag, "lang", "en_US", usageLang)
+	flag.BoolVar(&googleFlag, "google", false, usageGoogle)
+	// flag.StringVar(&langFlag, "lang", "en_US", usageLang)
 	flag.Parse()
 }
 
 func main() {
 	var vWord string
+
+	// Read stdin
+	reader := bufio.NewReader(os.Stdin)
+	stdin, _ := reader.ReadBytes('\n')
 
 	// Doesn't work... COLUMNS is set by shell
 	// ncols, _ = strconv.Atoi(os.Getenv("COLUMNS"))
@@ -114,9 +117,7 @@ func main() {
 	wrapper := wordwrap.Wrapper(ncols, false)
 
 	// If "-json" is given, it will parse json from `sdcv`
-	if jsonFlag {
-		reader := bufio.NewReader(os.Stdin)
-		stdin, _ := reader.ReadBytes('\n')
+	if !googleFlag {
 		// fmt.Println(text)
 		jsonparser.ArrayEach(stdin, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 			vDict, _ := jsonparser.GetString(value, "dict")
@@ -136,23 +137,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	args := flag.Args()
-	if l := len(os.Args); l == 1 {
-		log.Fatal("No word given")
-	}
-	word := args[0]
-
-	url := fmt.Sprintf("https://api.dictionaryapi.dev/api/v2/entries/%s/%s", langFlag, word)
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	content, _ := io.ReadAll(resp.Body)
-
-	// fmt.Println(string(content))
-
-	// jsonparser.ObjectEach(content, func(value []byte, dataType jsonparser.ValueType, offset int))
-	jsonparser.ArrayEach(content, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+	// Parse google dict result from "https://dictionaryapi.dev/"
+	fmt.Println("Google dictionary")
+	jsonparser.ArrayEach(stdin, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		vWord, _ = jsonparser.GetString(value, "word")
 		// fmt.Println(vWord)
 		printStyle(vWord, sB, fg15, bg8)
