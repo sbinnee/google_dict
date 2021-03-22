@@ -29,3 +29,5 @@ If `--google` flag is given,
 	- https://github.com/gookit/color
 	- https://github.com/1dot75cm/gocolor
 
+## TODO
+[] Let user configure the history file path through a flag

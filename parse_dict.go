@@ -90,8 +90,6 @@ func appendWord(word string) {
 
 var googleFlag bool
 
-// var langFlag string
-
 func init() {
 	log.SetFlags(0)
 
@@ -100,7 +98,6 @@ func init() {
 		usageLang   = "Choose language {en_US, fr}."
 	)
 	flag.BoolVar(&googleFlag, "google", false, usageGoogle)
-	// flag.StringVar(&langFlag, "lang", "en_US", usageLang)
 	flag.Parse()
 }
 
@@ -116,7 +113,7 @@ func main() {
 	// fmt.Printf("%v %T", envCOLUMNS, envCOLUMNS)
 	wrapper := wordwrap.Wrapper(ncols, false)
 
-	// If "-json" is given, it will parse json from `sdcv`
+	// By default, `parse_dict` parses json output from `sdcv`
 	if !googleFlag {
 		// fmt.Println(text)
 		jsonparser.ArrayEach(stdin, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -132,12 +129,12 @@ func main() {
 			}
 		})
 		fmt.Println()
-
+		// Append the word to a file
 		appendWord(vWord)
 		os.Exit(0)
 	}
 
-	// Parse google dict result from "https://dictionaryapi.dev/"
+	// If "-google" is given, it will parse google dict result from "https://dictionaryapi.dev/"
 	fmt.Println("Google dictionary")
 	jsonparser.ArrayEach(stdin, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		vWord, _ = jsonparser.GetString(value, "word")
@@ -164,13 +161,13 @@ func main() {
 				vDef, _ := jsonparser.GetString(va, "definition")
 				vEx, _ := jsonparser.GetString(va, "example")
 				vDef = fmt.Sprintf("%v. %v", ind, vDef)
-				fmt.Println(wordwrap.Indent(vDef, "  ", false))
+				fmt.Println(wordwrap.Indent(wrapper(vDef), "  ", false))
 				// fmt.Printf("  %v. %v\n", ind, wrapper(vDef))
 				if len(vEx) > 0 {
 					// fmt.Println("   ⤷", "\""+vEx+"\"")
 					// fmt.Printf("   ⤷ %v\n", wrapper("\""+vEx+"\""))
 					vEx = fmt.Sprintf("⤷ \"%v\"", vEx)
-					fmt.Println(wordwrap.Indent(vEx, "   ", false))
+					fmt.Println(wordwrap.Indent(wrapper(vEx), "   ", false))
 				}
 				// syn, _ := jsonparser.GetString(va, "synonyms")
 				// fmt.Println("\t", syn)
