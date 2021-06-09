@@ -29,5 +29,18 @@ If `--google` flag is given,
 	- https://github.com/gookit/color
 	- https://github.com/1dot75cm/gocolor
 
+## Usage
+```bash
+# sdcv
+sdcv --non-interactive --utf8-output --color --json-output "$word" \
+    | COLUMNS="${$(tput cols):-72}" parse_dict
+
+# google dict
+curl --silent "https://api.dictionaryapi.dev/api/v2/entries/${LANG:-en_US}/$word}" \
+    | COLUMNS=$COLUMNS parse_dict -google
+```
+
 ## TODO
 [] Let user configure the history file path through a flag
+[] Multiple words found
+[] No word found

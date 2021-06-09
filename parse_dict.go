@@ -4,15 +4,15 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/buger/jsonparser"
-	"github.com/eidolon/wordwrap"
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"strings"
-)
 
-const ncols int = 80
+	"github.com/buger/jsonparser"
+	"github.com/eidolon/wordwrap"
+)
 
 const (
 	// Foreground Color
@@ -90,6 +90,9 @@ func appendWord(word string) {
 
 var googleFlag bool
 
+// var historyFlag string
+// var ncolsFlag int
+
 func init() {
 	log.SetFlags(0)
 
@@ -108,10 +111,12 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	stdin, _ := reader.ReadBytes('\n')
 
-	// Doesn't work... COLUMNS is set by shell
-	// ncols, _ = strconv.Atoi(os.Getenv("COLUMNS"))
-	// fmt.Printf("%v %T", envCOLUMNS, envCOLUMNS)
-	wrapper := wordwrap.Wrapper(ncols, false)
+	// Default is 72
+	ncols, _ := strconv.Atoi(os.Getenv("COLUMNS"))
+	if ncols == 0 {
+		ncols = 72
+	}
+	wrapper := wordwrap.Wrapper(ncols-1, false)
 
 	// By default, `parse_dict` parses json output from `sdcv`
 	if !googleFlag {
