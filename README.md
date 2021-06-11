@@ -44,5 +44,5 @@ curl --silent "https://api.dictionaryapi.dev/api/v2/entries/${LANG:-en_US}/$word
 - [ ] No word found
 
 <!-- Links -->
-[sdcv]: https://dushistov.github.io/sdcv/
+[`sdcv`]: https://dushistov.github.io/sdcv/
 [dictionary.dev]: https://dictionaryapi.dev/
