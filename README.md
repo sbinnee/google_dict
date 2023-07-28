@@ -27,6 +27,17 @@ If `--google` flag is given,
 	- https://github.com/gookit/color
 	- https://github.com/1dot75cm/gocolor
 
+## Installation
+1. Install `sdcv`
+
+2. Download dictionaries
+
+    Go to https://web.archive.org/web/20200702000038/http://download.huzheng.org/ and
+    download dictionaries to use.
+
+3. Place the dictionaries in a folder and set `$STARDICT_DATA_DIR`
+
+
 ## Usage
 ```bash
 # sdcv
@@ -37,6 +48,9 @@ sdcv --non-interactive --utf8-output --color --json-output "$word" \
 curl --silent "https://api.dictionaryapi.dev/api/v2/entries/${LANG:-en_US}/$word}" \
     | COLUMNS=$COLUMNS parse_dict -google
 ```
+
+
+
 
 ## TODO
 - [ ] Let user configure the history file path through a flag
